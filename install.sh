@@ -59,16 +59,24 @@ then
   then
     echo -e "\e[32m    FTP installed \e[39m"
   else
-    echo -e "\e[31m    FTP not installed, install started \e[39m" && \
+    echo -e "\e[31m    FTP not installed, install started \e[39m"
+
+    if ! id -u ftpuser > /dev/null 2>&1; then
+      useradd -g www-data -d /home/ftpuser -m -s /bin/false ftpuser > /dev/null 2>&1
+    fi
+
     apt-get install pure-ftpd -y > /dev/null 2>&1 && \
+    systemctl start pure-ftpd.service && \
+    systemctl enable pure-ftpd.service > /dev/null 2>&1 && \
     cd /etc/pure-ftpd/ && \
     mv pure-ftpd.conf pure-ftpd.conf.old && \
     wget https://raw.githubusercontent.com/darbit-ru/bitrix_docker/master/pure-ftpd.conf > /dev/null 2>&1 && \
     ufw allow from any to any port 20,21,30000:50000 proto tcp > /dev/null 2>&1 && \
     touch /etc/pure-ftpd/pureftpd.passwd && \
+    pure-pw mkdb > /dev/null 2>&1 && \
     ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
-    systemctl start pure-ftpd.service && \
-    systemctl enable pure-ftpd.service > /dev/null 2>&1
+    echo yes > /etc/pure-ftpd/conf/ChrootEveryone && \
+    systemctl restart pure-ftpd.service
   fi
 
   #show message that all required packets installed
@@ -82,7 +90,7 @@ then
 
     cd $WORK_PATH && \
     git clone https://github.com/darbit-ru/bitrix_docker.git && \
-    cd /var/ && chmod -R 775 www/ && chown -R root:www-data www/ && \
+    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-data www/ && \
     cd $DOCKER_FOLDER_PATH
 
     echo -e "\n\e[33mCopy environment setting file and starting configuration \e[39m"
@@ -181,7 +189,7 @@ then
     mkdir -p $WEBSITE_FILES_PATH && \
     cd $WEBSITE_FILES_PATH && \
     if [[ $INSTALLATION_TYPE == "C" ]]; then wget http://www.1c-bitrix.ru/download/scripts/bitrixsetup.php; elif [[ $INSTALLATION_TYPE == "R" ]]; then wget http://www.1c-bitrix.ru/download/scripts/restore.php; fi && \
-    cd /var/ && chmod -R 775 www/ && chown -R root:www-data www/
+    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-data www/
 
     echo -e "\n\e[33mConfiguring NGINX conf file \e[39m"
     cp -f $DOCKER_FOLDER_PATH/nginx/conf/default.conf_template $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf && \
@@ -233,14 +241,14 @@ then
 
     echo -e "\n\e[33mConfiguring FTP user \e[39m"
 
-    FTP_USER=$PROJECT_CLEARED_NAME"_ftp_"$((1 + $RANDOM % 9999))
+    FTP_USER=$PROJECT_CLEARED_NAME"_ftp_"$((1 + $RANDOM % 999999))
     FTP_PASSWORD=$(openssl rand -base64 32)
 
-    USER="www-data";
+    USER="ftpuser";
     USER_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 3`;
     GROUP_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 4`;
 
-    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | /usr/bin/pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH" > /dev/null 2>&1;
+    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH/" > /dev/null 2>&1;
     pure-pw mkdb > /dev/null 2>&1;
 
     systemctl restart pure-ftpd.service
@@ -272,14 +280,14 @@ then
     echo -e "\n\e[33mConfiguring FTP user \e[39m"
     PROJECT_CLEARED_NAME=`echo $SITE_NAME | tr "." "_" | tr "-" "_"`
 
-    FTP_USER=$PROJECT_CLEARED_NAME"_ftp_"$((1 + $RANDOM % 9999))
+    FTP_USER=$PROJECT_CLEARED_NAME"_ftp_"$((1 + $RANDOM % 999999))
     FTP_PASSWORD=$(openssl rand -base64 32)
 
-    USER="www-data";
+    USER="ftpuser";
     USER_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 3`;
     GROUP_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 4`;
 
-    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | /usr/bin/pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH" > /dev/null 2>&1;
+    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH/" > /dev/null 2>&1;
     pure-pw mkdb > /dev/null 2>&1;
 
     systemctl restart pure-ftpd.service
@@ -380,6 +388,13 @@ then
     DATABASE_USER=$PROJECT_CLEARED_NAME"_user"
 
     mysql --defaults-extra-file=$MYSQL_AUTH_FILE -P 3306 --protocol=tcp -e "DROP DATABASE $DATABASE_NAME; DROP USER '$DATABASE_USER'@'%';"
+
+    for FTP_USER in $(sed -n -e '/^'$PROJECT_CLEARED_NAME'_ftp_/p' /etc/pure-ftpd/pureftpd.passwd | cut -d ':' -f 1)
+    do
+      pure-pw userdel "${FTP_USER}" 2> /dev/null;
+    done
+    pure-pw mkdb > /dev/null 2>&1;
+    systemctl start pure-ftpd.service
 
     echo -e "\e[32mWebsite database and user removed \e[39m\n"
   fi

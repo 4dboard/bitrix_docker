@@ -1,6 +1,6 @@
 FROM mysql:8.0
 
-MAINTAINER vitams
+MAINTAINER darbit
 
 ADD my.cnf /etc/mysql/conf.d/my.cnf
 
