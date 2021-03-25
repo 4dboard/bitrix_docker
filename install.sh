@@ -32,7 +32,7 @@ then
   then
     echo -e "\e[32m    GIT installed \e[39m"
   else
-    echo -e "\e[31m    GIT not installed, install started \e[39m" && apt-get install -y git
+    echo -e "\e[31m    GIT not installed, install started \e[39m" && apt-get install -y git > /dev/null 2>&1
   fi
 
   #checking is docker installed
@@ -59,20 +59,29 @@ then
   then
     echo -e "\e[32m    FTP installed \e[39m"
   else
-    echo -e "\e[31m    FTP not installed, install started \e[39m" && apt-get install pure-ftpd -y && cd /etc/pure-ftpd/ && mv pure-ftpd.conf pure-ftpd.conf.old && wget https://raw.githubusercontent.com/darbit-ru/bitrix_docker/master/pure-ftpd.conf && systemctl start pure-ftpd.service && ufw allow from any to any port 20,21 proto tcp && ufw allow 30000:50000/tcp && touch /etc/pure-ftpd/pureftpd.passwd
+    echo -e "\e[31m    FTP not installed, install started \e[39m" && \
+    apt-get install pure-ftpd -y > /dev/null 2>&1 && \
+    cd /etc/pure-ftpd/ && \
+    mv pure-ftpd.conf pure-ftpd.conf.old && \
+    wget https://raw.githubusercontent.com/darbit-ru/bitrix_docker/master/pure-ftpd.conf > /dev/null 2>&1 && \
+    ufw allow from any to any port 20,21,30000:50000 proto tcp > /dev/null 2>&1 && \
+    touch /etc/pure-ftpd/pureftpd.passwd && \
+    ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
+    systemctl start pure-ftpd.service && \
+    systemctl enable pure-ftpd.service > /dev/null 2>&1
   fi
 
   #show message that all required packets installed
   echo -e "\n\e[32mAll required packets installed \e[39m\n\n"
 
   # downloading docker from git source
-  DOCKER_FOLDER_PATH=$WORK_PATH/bitrixdock
+  DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
   if [ ! -d "$DOCKER_FOLDER_PATH" ]
   then
     echo -e "\e[33mDocker containers is not installed. Installation starting... \e[39m\n"
 
     cd $WORK_PATH && \
-    git clone https://github.com/kzk888/bitrixdock.git && \
+    git clone https://github.com/darbit-ru/bitrix_docker.git && \
     cd /var/ && chmod -R 775 www/ && chown -R root:www-data www/ && \
     cd $DOCKER_FOLDER_PATH
 
@@ -201,7 +210,7 @@ then
         then
             docker exec -it darbit_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
-            DOCKER_FOLDER_PATH=$WORK_PATH/bitrixdock
+            DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
             docker cp darbit_docker_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
             docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
@@ -321,7 +330,7 @@ then
         then
             docker exec -it darbit_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
-            DOCKER_FOLDER_PATH=$WORK_PATH/bitrixdock
+            DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
             docker cp darbit_docker_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
             docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
@@ -351,7 +360,7 @@ then
     rm -rf $WEBSITE_FILES_PATH
     echo -e "\e[32mWebsite folder removed \e[39m\n"
 
-    DOCKER_FOLDER_PATH=$WORK_PATH/bitrixdock
+    DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
 
     docker exec -it darbit_docker_webserver /bin/bash -c "certbot delete --cert-name $SITE_NAME" && \
     docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
