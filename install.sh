@@ -7,11 +7,11 @@ WORK_PATH=/var/www
 MYSQL_AUTH_FILE=/var/www/mysql_auth
 
 # choosing ACTION
-echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\e[39m"
+echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\nD - delete FTP account from website;\e[39m"
 read ACTION
-until [[ $PHP_VERSION != "I" || $PHP_VERSION != "R" || $PHP_VERSION != "S" || $PHP_VERSION != "F" ]]
+until [[ $PHP_VERSION != "I" || $PHP_VERSION != "R" || $PHP_VERSION != "S" || $PHP_VERSION != "F" || $PHP_VERSION != "D" ]]
 do
-    echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\e[39m"
+    echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\nD - delete FTP account from website;\e[39m"
     read ACTION
 done
 
@@ -133,7 +133,7 @@ then
     until [[ ! -z "$MYSQL_DATABASE_ROOT_PASSWORD" ]]
     do
         echo -e "\e[33mSet MYSQL database ROOT PASSWORD: \e[39m"
-      read MYSQL_DATABASE_ROOT_PASSWORD
+        read MYSQL_DATABASE_ROOT_PASSWORD
     done
     sed -i "s/#DATABASE_ROOT_PASSWORD#/$MYSQL_DATABASE_ROOT_PASSWORD/g" $DOCKER_FOLDER_PATH/.env
     echo -e "[client]\nuser=root\npassword="$MYSQL_DATABASE_ROOT_PASSWORD > $MYSQL_AUTH_FILE
@@ -344,6 +344,27 @@ then
             docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
         fi
     fi
+  fi
+elif [[ $ACTION == "D" ]]
+then
+  echo -e "\n\n\e[33mEnter FTP user to delete: \e[39m"
+  read FTP_USER
+
+  until [[ ! -z "$FTP_USER" ]]
+  do
+      echo -e "\n\n\e[33mEnter FTP user to delete: \e[39m"
+      read FTP_USER
+  done
+
+  CHECK_LOGIN=`cat "/etc/pure-ftpd/pureftpd.passwd" | grep "$FTP_USER:" | cut -d ':' -f 1 | wc -l`
+  if [[ $CHECK_LOGIN -eq 0 ]]
+  then
+      echo -e "\e[31m    FTP user - $FTP_USER not found. Please, try again and enter correct FTP user name. \e[39m"
+  else
+      pure-pw userdel "${FTP_USER}" 2> /dev/null;
+      pure-pw mkdb > /dev/null 2>&1;
+      systemctl start pure-ftpd.service
+      echo -e "\e[32mFTP user deleted. \e[39m\n"
   fi
 elif [[ $ACTION == "R" ]]
 then
