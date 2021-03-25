@@ -9,7 +9,7 @@ MYSQL_AUTH_FILE=/var/www/mysql_auth
 # choosing ACTION
 echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\e[39m"
 read ACTION
-until [[ $PHP_VERSION != "I" || $PHP_VERSION != "R" ]]
+until [[ $PHP_VERSION != "I" || $PHP_VERSION != "R" || $PHP_VERSION != "S" || $PHP_VERSION != "F" ]]
 do
     echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\e[39m"
     read ACTION
@@ -59,7 +59,7 @@ then
   then
     echo -e "\e[32m    FTP installed \e[39m"
   else
-    echo -e "\e[31m    FTP not installed, install started \e[39m" && apt-get install pure-ftpd -y &&
+    echo -e "\e[31m    FTP not installed, install started \e[39m" && apt-get install pure-ftpd -y && cd /etc/pure-ftpd/ && mv pure-ftpd.conf pure-ftpd.conf.old && wget https://raw.githubusercontent.com/darbit-ru/bitrix_docker/master/pure-ftpd.conf && systemctl start pure-ftpd.service && ufw allow from any to any port 20,21 proto tcp && ufw allow 30000:50000/tcp && touch /etc/pure-ftpd/pureftpd.passwd
   fi
 
   #show message that all required packets installed
@@ -127,6 +127,8 @@ then
     cd $DOCKER_FOLDER_PATH
     echo -e "\n\e[32mStarting DOCKER containers \e[39m\n"
     docker-compose up -d
+
+    systemctl start pure-ftpd.service
   fi
 
   #checking site name domain
@@ -219,8 +221,63 @@ then
     echo -e "\e[33mDatabase name: "$DATABASE_NAME" \e[39m"
     echo -e "\e[33mDatabase user: "$DATABASE_USER" \e[39m"
     echo -e "\e[33mDatabase password: "$DATABASE_PASSWORD" \e[39m"
+
+    echo -e "\n\e[33mConfiguring FTP user \e[39m"
+
+    FTP_USER=$PROJECT_CLEARED_NAME"_ftp_"$((1 + $RANDOM % 9999))
+    FTP_PASSWORD=$(openssl rand -base64 32)
+
+    USER="www-data";
+    USER_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 3`;
+    GROUP_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 4`;
+
+    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | /usr/bin/pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH" > /dev/null 2>&1;
+    pure-pw mkdb > /dev/null 2>&1;
+
+    systemctl restart pure-ftpd.service
+
+    echo -e "\e[33mURL: "$SITE_NAME" \e[39m"
+    echo -e "\e[33mFTP user: "$FTP_USER" \e[39m"
+    echo -e "\e[33mFTP password: "$FTP_PASSWORD" \e[39m"
   else
     echo -e "\e[31m    By path $WEBSITE_FILES_PATH website exist. Please remove folder and restart installation script. \e[39m"
+  fi
+elif [[ $ACTION == "F" ]]
+then
+  #checking site name domain
+  echo -e "\n\n\e[33mEnter site name (websitename.domain | example: mail.ru): \e[39m"
+  read SITE_NAME
+  domainRegex="(^([a-zA-Z0-9](([a-zA-Z0-9-]){0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{0,10}$)"
+  until [[ $SITE_NAME =~ $domainRegex ]]
+  do
+      echo -e "\e[33mEnter site name (websitename.domain | example: mail.ru): \e[39m"
+      read SITE_NAME
+  done
+
+  WEBSITE_FILES_PATH=$WORK_PATH/bitrix/$SITE_NAME
+  #checking is site directory exist
+  if [ ! -d "$WEBSITE_FILES_PATH" ]
+  then
+    echo -e "\e[31m    By path $WEBSITE_FILES_PATH website not exist. Please, restart script and enter correct website name [example: mail.ru]. \e[39m"
+  else
+    echo -e "\n\e[33mConfiguring FTP user \e[39m"
+    PROJECT_CLEARED_NAME=`echo $SITE_NAME | tr "." "_" | tr "-" "_"`
+
+    FTP_USER=$PROJECT_CLEARED_NAME"_ftp_"$((1 + $RANDOM % 9999))
+    FTP_PASSWORD=$(openssl rand -base64 32)
+
+    USER="www-data";
+    USER_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 3`;
+    GROUP_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 4`;
+
+    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | /usr/bin/pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH" > /dev/null 2>&1;
+    pure-pw mkdb > /dev/null 2>&1;
+
+    systemctl restart pure-ftpd.service
+
+    echo -e "\e[33mURL: "$SITE_NAME" \e[39m"
+    echo -e "\e[33mFTP user: "$FTP_USER" \e[39m"
+    echo -e "\e[33mFTP password: "$FTP_PASSWORD" \e[39m"
   fi
 elif [[ $ACTION == "S" ]]
 then
