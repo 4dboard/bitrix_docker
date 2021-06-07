@@ -5,6 +5,7 @@ RELEASE_FILE=/etc/os-release
 OS=$(egrep '^(NAME)=' $RELEASE_FILE | tr -d '"' | tr -d 'NAME' | tr -d '=')
 WORK_PATH=/var/www
 MYSQL_AUTH_FILE=/var/www/mysql_auth
+CURRENT_USER=$(whoami)
 
 # choosing ACTION
 echo -e "\e[33mSelect action: \nI - add new website;\nR - remove website;\nS - generate SSL letsencrypt for website;\nF - create FTP account to website;\nD - delete FTP account from website;\e[39m"
@@ -41,7 +42,7 @@ then
   then
     echo -e "\e[32m    DOCKER installed \e[39m"
   else
-    echo -e "\e[31m    DOCKER not installed, install started \e[39m" && cd /usr/local/src && wget -qO- https://get.docker.com/ | sh
+    echo -e "\e[31m    DOCKER not installed, install started \e[39m" && cd /usr/local/src && wget -qO- https://get.docker.com/ | sh > /dev/null 2>&1
   fi
 
   #checking is installed docker-compose
@@ -50,7 +51,7 @@ then
   then
     echo -e "\e[32m    DOCKER-COMPOSE installed \e[39m"
   else
-    echo -e "\e[31m    DOCKER-COMPOSE not installed, install started \e[39m" && curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose && source ~/.bashrc
+    echo -e "\e[31m    DOCKER-COMPOSE not installed, install started \e[39m" && curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose && source ~/.bashrc > /dev/null 2>&1
   fi
 
   #checking is pure-ftpd installed
@@ -66,7 +67,8 @@ then
     fi
 
     apt-get install pure-ftpd -y > /dev/null 2>&1 && \
-    systemctl start pure-ftpd.service && \
+    apt-get install mysql-client -y > /dev/null 2>&1 && \
+    systemctl start pure-ftpd.service > /dev/null 2>&1  && \
     systemctl enable pure-ftpd.service > /dev/null 2>&1 && \
     cd /etc/pure-ftpd/ && \
     mv pure-ftpd.conf pure-ftpd.conf.old && \
@@ -76,7 +78,16 @@ then
     pure-pw mkdb > /dev/null 2>&1 && \
     ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
     echo yes > /etc/pure-ftpd/conf/ChrootEveryone && \
-    systemctl restart pure-ftpd.service
+    systemctl restart pure-ftpd.service && \
+    groupadd www-pub && \
+    usermod -a -G $CURRENT_USER && \
+    groups $CURRENT_USER && \
+    chown -R root:www-pub /var/www && \
+    chmod 2775 /var/www && \
+    chmod -R o+r /var/www > /dev/null 2>&1 && \
+    chmod -R g+w /var/www > /dev/null 2>&1 && \
+    find /var/www -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
+    find /var/www -type f -exec chmod 0664 {} + > /dev/null 2>&1
   fi
 
   #show message that all required packets installed
@@ -90,7 +101,7 @@ then
 
     cd $WORK_PATH && \
     git clone https://github.com/darbit-ru/bitrix_docker.git && \
-    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-data www/ && \
+    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-pub www/ && \
     cd $DOCKER_FOLDER_PATH
 
     echo -e "\n\e[33mCopy environment setting file and starting configuration \e[39m"
