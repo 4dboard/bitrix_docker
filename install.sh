@@ -79,10 +79,7 @@ then
     ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
     echo yes > /etc/pure-ftpd/conf/ChrootEveryone && \
     systemctl restart pure-ftpd.service && \
-    groupadd www-pub && \
-    usermod -a -G $CURRENT_USER && \
-    groups $CURRENT_USER && \
-    chown -R root:www-pub /var/www && \
+    chown -R root:www-data /var/www && \
     chmod 2775 /var/www && \
     chmod -R o+r /var/www > /dev/null 2>&1 && \
     chmod -R g+w /var/www > /dev/null 2>&1 && \
@@ -101,7 +98,7 @@ then
 
     cd $WORK_PATH && \
     git clone https://github.com/darbit-ru/bitrix_docker.git && \
-    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-pub www/ && \
+    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-data www/ && \
     cd $DOCKER_FOLDER_PATH
 
     echo -e "\n\e[33mCopy environment setting file and starting configuration \e[39m"
