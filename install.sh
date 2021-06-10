@@ -131,7 +131,7 @@ then
     done
     SELECTED_MYSQL_VERSION=mysql57
     if [[ $MYSQL_VERSION == "8.0" ]]; then
-      SELECTED_MYSQL_VERSION=php80
+      SELECTED_MYSQL_VERSION=mysql80
     fi
     sed -i "s/#DB_SERVER_TYPE#/$SELECTED_MYSQL_VERSION/g" $DOCKER_FOLDER_PATH/.env
 
