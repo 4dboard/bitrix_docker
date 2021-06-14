@@ -84,7 +84,8 @@ then
     chmod -R o+r /var/www > /dev/null 2>&1 && \
     chmod -R g+w /var/www > /dev/null 2>&1 && \
     find /var/www -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
-    find /var/www -type f -exec chmod 0664 {} + > /dev/null 2>&1
+    find /var/www -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
+    usermod -a -G www-data $CURRENT_USER
   fi
 
   #show message that all required packets installed
