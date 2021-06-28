@@ -79,7 +79,7 @@ then
     ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
     echo yes > /etc/pure-ftpd/conf/ChrootEveryone && \
     systemctl restart pure-ftpd.service && \
-    chown -R root:www-data /var/www && \
+    chown -R ftpuser:www-data /var/www && \
     chmod 2775 /var/www && \
     chmod -R o+r /var/www > /dev/null 2>&1 && \
     chmod -R g+w /var/www > /dev/null 2>&1 && \
