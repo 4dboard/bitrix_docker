@@ -156,7 +156,7 @@ services:
             - db:/var/lib/mysql
             - ./data/memcached:/var/lib/memcached
             - ./www/html:/var/www/html
-            - ${SITE_PATH}:/var/www/bitrix
+            - ${SITE_PATH}:/home/darbit/bitrix
             - /etc/localtime:/etc/localtime/:ro
         networks:
             - bitrix
