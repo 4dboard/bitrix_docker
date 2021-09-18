@@ -3,7 +3,8 @@ set -e
 
 RELEASE_FILE=/etc/os-release
 OS=$(egrep '^(NAME)=' $RELEASE_FILE | tr -d '"' | tr -d 'NAME' | tr -d '=')
-WORK_PATH=/var/www
+WORK_PATH=/home/darbit
+DOCKER_PATH=/var/www
 MYSQL_AUTH_FILE=/var/www/mysql_auth
 CURRENT_USER=$(whoami)
 
@@ -18,6 +19,11 @@ done
 
 if [[ $ACTION == "I" ]]
 then
+  if [ ! -d "$WORK_PATH" ]
+  then
+    mkdir -p $WORK_PATH
+  fi
+
   #checking OS
   echo -e "\e[33mChecking OS \e[39m"
   if [[ $OS != "Ubuntu" ]]
@@ -66,6 +72,8 @@ then
       useradd -g www-data -d /home/ftpuser -m -s /bin/false ftpuser > /dev/null 2>&1
     fi
 
+
+
     apt-get install pure-ftpd -y > /dev/null 2>&1 && \
     apt-get install mysql-client -y > /dev/null 2>&1 && \
     systemctl start pure-ftpd.service > /dev/null 2>&1  && \
@@ -79,27 +87,31 @@ then
     ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
     echo yes > /etc/pure-ftpd/conf/ChrootEveryone && \
     systemctl restart pure-ftpd.service && \
-    chown -R ftpuser:www-data /var/www && \
-    chmod 2775 /var/www && \
-    chmod -R o+r /var/www > /dev/null 2>&1 && \
-    chmod -R g+w /var/www > /dev/null 2>&1 && \
-    find /var/www -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
-    find /var/www -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
+    chown -R ftpuser:www-data $WORK_PATH && \
+    chmod 2775 $WORK_PATH && \
+    chmod -R o+r $WORK_PATH > /dev/null 2>&1 && \
+    chmod -R g+w $WORK_PATH > /dev/null 2>&1 && \
+    find $WORK_PATH -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
+    find $WORK_PATH -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
     usermod -a -G www-data $CURRENT_USER
   fi
 
   #show message that all required packets installed
   echo -e "\n\e[32mAll required packets installed \e[39m\n\n"
 
+  if [ ! -d "$DOCKER_PATH" ]
+  then
+    mkdir -p $DOCKER_PATH
+  fi
+
   # downloading docker from git source
-  DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
+  DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
   if [ ! -d "$DOCKER_FOLDER_PATH" ]
   then
     echo -e "\e[33mDocker containers is not installed. Installation starting... \e[39m\n"
 
-    cd $WORK_PATH && \
+    cd $DOCKER_PATH && \
     git clone https://github.com/darbit-ru/bitrix_docker.git && \
-    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-data www/ && \
     cd $DOCKER_FOLDER_PATH
 
     echo -e "\n\e[33mCopy environment setting file and starting configuration \e[39m"
@@ -198,7 +210,7 @@ then
     mkdir -p $WEBSITE_FILES_PATH && \
     cd $WEBSITE_FILES_PATH && \
     if [[ $INSTALLATION_TYPE == "C" ]]; then wget http://www.1c-bitrix.ru/download/scripts/bitrixsetup.php; elif [[ $INSTALLATION_TYPE == "R" ]]; then wget http://www.1c-bitrix.ru/download/scripts/restore.php; fi && \
-    cd /var/ && chmod -R 775 www/ && chown -R ftpuser:www-data www/
+    cd /home/ && chmod -R 775 darbit_sites/ && chown -R ftpuser:www-data darbit_sites/
 
     echo -e "\n\e[33mConfiguring NGINX conf file \e[39m"
     cp -f $DOCKER_FOLDER_PATH/nginx/conf/default.conf_template $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf && \
