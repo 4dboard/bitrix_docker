@@ -72,8 +72,6 @@ then
       useradd -g www-data -d /home/ftpuser -m -s /bin/false ftpuser > /dev/null 2>&1
     fi
 
-
-
     apt-get install pure-ftpd -y > /dev/null 2>&1 && \
     apt-get install mysql-client -y > /dev/null 2>&1 && \
     systemctl start pure-ftpd.service > /dev/null 2>&1  && \
@@ -86,15 +84,18 @@ then
     pure-pw mkdb > /dev/null 2>&1 && \
     ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure && \
     echo yes > /etc/pure-ftpd/conf/ChrootEveryone && \
-    systemctl restart pure-ftpd.service && \
-    chown -R ftpuser:www-data $WORK_PATH && \
-    chmod 2775 $WORK_PATH && \
-    chmod -R o+r $WORK_PATH > /dev/null 2>&1 && \
-    chmod -R g+w $WORK_PATH > /dev/null 2>&1 && \
-    find $WORK_PATH -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
-    find $WORK_PATH -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
-    usermod -a -G www-data $CURRENT_USER
+    systemctl restart pure-ftpd.service
+
   fi
+
+  # change folder access
+  chown -R ftpuser:www-data $WORK_PATH && \
+  chmod 2775 $WORK_PATH && \
+  chmod -R o+r $WORK_PATH > /dev/null 2>&1 && \
+  chmod -R g+w $WORK_PATH > /dev/null 2>&1 && \
+  find $WORK_PATH -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
+  find $WORK_PATH -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
+  usermod -a -G www-data $CURRENT_USER
 
   #show message that all required packets installed
   echo -e "\n\e[32mAll required packets installed \e[39m\n\n"
