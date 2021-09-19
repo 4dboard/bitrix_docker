@@ -88,15 +88,6 @@ then
 
   fi
 
-  # change folder access
-  chown -R ftpuser:www-data $WORK_PATH && \
-  chmod 2775 $WORK_PATH && \
-  chmod -R o+r $WORK_PATH > /dev/null 2>&1 && \
-  chmod -R g+w $WORK_PATH > /dev/null 2>&1 && \
-  find $WORK_PATH -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
-  find $WORK_PATH -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
-  usermod -a -G www-data $CURRENT_USER
-
   #show message that all required packets installed
   echo -e "\n\e[32mAll required packets installed \e[39m\n\n"
 
@@ -278,6 +269,15 @@ then
     echo -e "\e[33mURL: "$SITE_NAME" \e[39m"
     echo -e "\e[33mFTP user: "$FTP_USER" \e[39m"
     echo -e "\e[33mFTP password: "$FTP_PASSWORD" \e[39m"
+
+    # change folder access
+    chown -R ftpuser:www-data $WORK_PATH && \
+    chmod 2775 $WORK_PATH && \
+    chmod -R o+r $WORK_PATH > /dev/null 2>&1 && \
+    chmod -R g+w $WORK_PATH > /dev/null 2>&1 && \
+    find $WORK_PATH -type d -exec chmod 2775 {} + > /dev/null 2>&1 && \
+    find $WORK_PATH -type f -exec chmod 0664 {} + > /dev/null 2>&1 && \
+    usermod -a -G www-data $CURRENT_USER
   else
     echo -e "\e[31m    By path $WEBSITE_FILES_PATH website exist. Please remove folder and restart installation script. \e[39m"
   fi
