@@ -1,6 +1,6 @@
 FROM nginx:1.18
 
-RUN apt-get update -y > /dev/null 2>&1 && apt install python-certbot-nginx -y > /dev/null 2>&1 && apt-get -y install cron > /dev/null
+RUN apt-get update -y > /dev/null 2>&1 && apt-get install -y apt-transport-https > /dev/null 2>&1 && apt install python-certbot-nginx -y > /dev/null 2>&1 && apt-get -y install cron > /dev/null
 
 ADD conf/nginx.conf /etc/nginx/
 COPY conf/conf.d/ /etc/nginx/conf.d/

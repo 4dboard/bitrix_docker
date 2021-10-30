@@ -70,6 +70,8 @@ services:
         ports:
         - '127.0.0.1:9200:9200'
         - '127.0.0.1:9300:9300'
+        - '${INTERFACE}:9299:9200'
+        - '${INTERFACE}:9399:9300'
         environment:
             - cluster.name=web
             - node.name=${PROJECT}es
