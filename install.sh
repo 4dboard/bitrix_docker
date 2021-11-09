@@ -261,7 +261,7 @@ then
     USER_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 3`;
     GROUP_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 4`;
 
-    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH/" > /dev/null 2>&1;
+    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -d $WEBSITE_FILES_PATH > /dev/null 2>&1;
     pure-pw mkdb > /dev/null 2>&1;
 
     systemctl restart pure-ftpd.service
@@ -309,7 +309,7 @@ then
     USER_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 3`;
     GROUP_ID=`cat /etc/passwd | grep "$USER:" | cut -d ':' -f 4`;
 
-    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -D "$WEBSITE_FILES_PATH/" > /dev/null 2>&1;
+    echo -e "${FTP_PASSWORD}\n${FTP_PASSWORD}\n" | pure-pw useradd ${FTP_USER} -u $USER_ID -g $GROUP_ID -d $WEBSITE_FILES_PATH > /dev/null 2>&1;
     pure-pw mkdb > /dev/null 2>&1;
 
     systemctl restart pure-ftpd.service
