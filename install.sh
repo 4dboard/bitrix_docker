@@ -231,7 +231,7 @@ then
         then
             docker exec -it darbit_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
-            DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
+            DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
             docker cp darbit_docker_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
             docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
@@ -360,7 +360,7 @@ then
         then
             docker exec -it darbit_docker_webserver /bin/bash -c "certbot --nginx -d $SITE_NAME -d www.$SITE_NAME"
 
-            DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
+            DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
             mv $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/$SITE_NAME.conf.old && \
             docker cp darbit_docker_webserver:/etc/nginx/conf.d/$SITE_NAME.conf $DOCKER_FOLDER_PATH/nginx/conf/conf.d/ && \
             docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
@@ -411,7 +411,7 @@ then
     rm -rf $WEBSITE_FILES_PATH
     echo -e "\e[32mWebsite folder removed \e[39m\n"
 
-    DOCKER_FOLDER_PATH=$WORK_PATH/bitrix_docker
+    DOCKER_FOLDER_PATH=$DOCKER_PATH/bitrix_docker
 
     docker exec -it darbit_docker_webserver /bin/bash -c "certbot delete --cert-name $SITE_NAME" && \
     docker cp darbit_docker_webserver:/etc/letsencrypt/ $DOCKER_FOLDER_PATH/nginx/
